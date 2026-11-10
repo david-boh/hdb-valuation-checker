@@ -42,12 +42,30 @@ export function getCustomLoadedRecords(): HdbRecord[] | null {
 
 export { parseRawApiRecord };
 
+export async function fetchCarparkAvailability(town?: string, carparkNumber?: string) {
+  try {
+    const url = new URL('/api/carparkavailability', window.location.origin);
+    if (town) url.searchParams.set('town', town);
+    if (carparkNumber) url.searchParams.set('carpark_number', carparkNumber);
+
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (currentConfig.apiKey) {
+      headers['AccountKey'] = currentConfig.apiKey;
+    }
+
+    const res = await fetch(url.toString(), { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Carpark fetch failed:', err);
+    return { status: 'fallback', carparks: [] };
+  }
+}
+
 /**
  * Service function to fetch HDB transactions.
- * Designed to mirror the upcoming HDB API contract:
- * - Accepts filtering by `town` (array of town names) and `flatType` (array of flat types).
- * - Normalizes the expected API response schema (_id, string floor_area_sqm, string resale_price, etc.)
- * - All other multi-dimensional filters and analytics are computed in-memory by the frontend.
+ * Connects to the serverless /api/transactions endpoint (pulling from Data.gov.sg datastore_search)
+ * with the AccountKey header, and falls back to local seed data if network is unavailable.
  */
 export async function fetchHdbTransactions(params?: ApiFilterParams): Promise<HdbRecord[]> {
   // Simulate network latency if configured
@@ -69,28 +87,29 @@ export async function fetchHdbTransactions(params?: ApiFilterParams): Promise<Hd
     return list;
   }
 
-  // If a custom external endpoint URL is provided, attempt live fetch
-  if (currentConfig.customEndpointUrl && currentConfig.customEndpointUrl.trim() !== '') {
-    try {
-      const url = new URL(currentConfig.customEndpointUrl);
-      if (params?.town && params.town.length > 0) {
-        url.searchParams.set('town', params.town.join(','));
-      }
-      if (params?.flatType && params.flatType.length > 0) {
-        url.searchParams.set('flat_type', params.flatType.join(','));
-      }
+  // Fetch from the serverless /api/transactions endpoint or custom URL
+  const endpoint = currentConfig.customEndpointUrl && currentConfig.customEndpointUrl.trim() !== ''
+    ? currentConfig.customEndpointUrl
+    : '/api/transactions';
 
-      const headers: Record<string, string> = {
-        Accept: 'application/json',
-      };
-      if (currentConfig.apiKey) {
-        headers['Authorization'] = `Bearer ${currentConfig.apiKey}`;
-      }
+  try {
+    const url = new URL(endpoint, window.location.origin);
+    if (params?.town && params.town.length > 0) {
+      url.searchParams.set('town', params.town.join(','));
+    }
+    if (params?.flatType && params.flatType.length > 0) {
+      url.searchParams.set('flat_type', params.flatType.join(','));
+    }
 
-      const response = await fetch(url.toString(), { headers });
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (currentConfig.apiKey) {
+      headers['AccountKey'] = currentConfig.apiKey;
+    }
+
+    const response = await fetch(url.toString(), { headers });
+    if (response.ok) {
       const rawJson = await response.json();
       let rawArray: any[] = [];
       if (Array.isArray(rawJson)) {
@@ -104,9 +123,9 @@ export async function fetchHdbTransactions(params?: ApiFilterParams): Promise<Hd
       if (rawArray.length > 0) {
         return rawArray.map(parseRawApiRecord);
       }
-    } catch (err) {
-      console.warn('Custom API fetch failed, falling back to local dataset:', err);
     }
+  } catch (err) {
+    console.warn('Serverless API fetch failed, falling back to local dataset:', err);
   }
 
   // Local data engine with server-like filtering on town and flatType
