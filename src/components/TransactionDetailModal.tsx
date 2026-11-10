@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { HdbRecord, TownAnalytics } from '../types/hdb';
 import { formatCurrency, formatPsf, formatArea, calculateBSD, calculateMonthlyMortgage } from '../utils/formatters';
 import { assessValuation } from '../utils/valuation';
-import { fetchCarparkAvailability } from '../services/hdbService';
-import { X, Building, Calculator, Check, ExternalLink, Calendar, Compass, ShieldAlert, ShieldCheck, AlertTriangle, Car } from 'lucide-react';
+import { X, Building, Calculator, Check, ExternalLink, Calendar, Compass, ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface TransactionDetailModalProps {
   record: HdbRecord | null;
@@ -27,8 +26,6 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
   const [showRawJson, setShowRawJson] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [carparks, setCarparks] = useState<any[]>([]);
-  const [loadingCarparks, setLoadingCarparks] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,19 +34,6 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-
-  useEffect(() => {
-    if (record?.town) {
-      setLoadingCarparks(true);
-      fetchCarparkAvailability(record.town)
-        .then((data) => {
-          if (Array.isArray(data.carparks)) {
-            setCarparks(data.carparks.slice(0, 4));
-          }
-        })
-        .finally(() => setLoadingCarparks(false));
-    }
-  }, [record?.town]);
 
   // Valuation Assessment calculation
   const valuation = useMemo(() => {
@@ -412,52 +396,6 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* Nearby Carpark Availability Section */}
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <Car className="w-4 h-4 text-red-600" />
-                Nearby HDB Carpark Availability ({record.town})
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">
-                Live Feed: /api/carparkavailability
-              </span>
-            </div>
-
-            {loadingCarparks ? (
-              <div className="text-xs text-slate-500 py-2">Loading live carpark lots...</div>
-            ) : carparks.length === 0 ? (
-              <div className="text-xs text-slate-500 py-1">No carparks found for this estate.</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {carparks.map((cp) => (
-                  <div
-                    key={cp.carparkNumber}
-                    className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <span className="font-mono text-red-600 dark:text-red-400">{cp.carparkNumber}</span>
-                        <span className="truncate max-w-[130px]">{cp.development}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        Occupancy: {cp.occupancyRatePercent}%
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-bold text-slate-900 dark:text-white">
-                        {cp.availableLots} / {cp.totalLots}
-                      </div>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        Lots Available
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 

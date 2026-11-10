@@ -7,7 +7,6 @@ export interface HealthCheckResponse {
   service: string;
   endpoints: {
     datastoreSearch: string;
-    carparkAvailability: string;
   };
   headersConfigured: {
     accountKey: boolean;
@@ -24,7 +23,6 @@ export default async function handler(req: Request, res: Response) {
     service: 'singapore-hdb-analytics-api',
     endpoints: {
       datastoreSearch: 'https://data.gov.sg/api/action/datastore_search?resource_id=d_8b84c4ee58e3cfc0ece0d773c8ca6abc',
-      carparkAvailability: 'https://datamall2.mytransport.sg/ltaodataservice/CarParkAvailabilityv2',
     },
     headersConfigured: {
       accountKey: Boolean(accountKey && accountKey.trim() !== ''),

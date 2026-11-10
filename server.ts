@@ -3,7 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import healthHandler from './api/health';
-import carparkHandler from './api/carparkavailability';
 import transactionsHandler from './api/transactions';
 
 dotenv.config();
@@ -18,7 +17,6 @@ app.use(express.json());
 
 // Serverless API Routes stored in /api folder
 app.all('/api/health', (req, res) => healthHandler(req, res));
-app.all('/api/carparkavailability', (req, res) => carparkHandler(req, res));
 app.all('/api/transactions', (req, res) => transactionsHandler(req, res));
 app.all('/api/hdb-transactions', (req, res) => transactionsHandler(req, res));
 

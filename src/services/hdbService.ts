@@ -42,26 +42,6 @@ export function getCustomLoadedRecords(): HdbRecord[] | null {
 
 export { parseRawApiRecord };
 
-export async function fetchCarparkAvailability(town?: string, carparkNumber?: string) {
-  try {
-    const url = new URL('/api/carparkavailability', window.location.origin);
-    if (town) url.searchParams.set('town', town);
-    if (carparkNumber) url.searchParams.set('carpark_number', carparkNumber);
-
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (currentConfig.apiKey) {
-      headers['AccountKey'] = currentConfig.apiKey;
-    }
-
-    const res = await fetch(url.toString(), { headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.warn('Carpark fetch failed:', err);
-    return { status: 'fallback', carparks: [] };
-  }
-}
-
 /**
  * Service function to fetch HDB transactions.
  * Connects to the serverless /api/transactions endpoint (pulling from Data.gov.sg datastore_search)
