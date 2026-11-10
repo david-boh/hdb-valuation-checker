@@ -1,0 +1,6 @@
+{
+  "name": "HDB Resale Pulse",
+  "description": "Interactive Singapore HDB resale price analytics, historical transaction trends, cross-town price comparisons, and unit PSF insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
